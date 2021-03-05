@@ -49,4 +49,15 @@ class UserController extends Controller
 
         return $this->success();
     }
+
+
+    /**
+     * 获取职位信息
+     * @return false|string
+     */
+    public function getRole()
+    {
+        $roleMap = [1 => '销售', 2 => '技术'];
+        return $this->success($roleMap);
+    }
 }
