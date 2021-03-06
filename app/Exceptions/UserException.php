@@ -32,7 +32,10 @@ class UserException extends BaseException
         '0020' => '修改昵称失败，游戏昵称不能为空',
         '0021' => '该用户不存在',
         '0022' => '该数据不存在',
-        '0023' => '修改信息失败，不能提交空信息'
+        '0023' => '修改信息失败，不能提交空信息',
+        '0024' => '红色星号是必填项',
+        '0025' => '手机号码格式错误',
+        '0026' => '银行卡号格式错误'
     ];
     const SYSTEM_BUSY = '0000';
     const LOGIN_FAIL = '0001';
@@ -58,4 +61,7 @@ class UserException extends BaseException
     const USER_NOT_EXISTS = '0021';
     const DATA_NOT_EXISTS = '0022';
     const EDIT_USER_INFO_ERROR = '0023';
+    const RED_ASTERISK_MEANS_REQUIRED = '0024';
+    const PHONE_FORMAT_ERROR = '0025';
+    const BANK_ACCOUNT_FORMAT_ERROR = '0026';
 }

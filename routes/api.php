@@ -15,9 +15,8 @@ use \Illuminate\Support\Facades\Route;
 
 Route::middleware('cors')->group(function () {
     Route::post('/user/login', 'UserController@login');
-    Route::post('/user/changePwd', 'UserController@changePwd');
-    Route::post('/user/role', 'UserController@getRole');
+    Route::post('/user/change-pwd', 'UserController@changePwd');
+    Route::post('/user/add-staff', 'UserController@addStaff');
+    Route::post('/user/staff-list', 'UserController@staffList');
 });
 
-
-\Illuminate\Support\Facades\Route::get('csv', 'IndexController@buildCsv');
