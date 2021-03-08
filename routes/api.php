@@ -20,6 +20,6 @@ Route::middleware('cors')->group(function () {
     Route::post('/user/staff-list', 'UserController@staffList');
     Route::post('/user/staff-detail', 'UserController@staffDetail');
     Route::post('/user/edit-staff', 'UserController@editStaff');
-    Route::post('/salary/build-excel', 'SalaryController@buildExcel');
+    Route::get('/salary/build-excel', 'SalaryController@buildExcel');
 });
 

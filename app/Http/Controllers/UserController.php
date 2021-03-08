@@ -172,7 +172,7 @@ class UserController extends Controller
         if (!$id) return $this->fail(UserException::E([UserException::PARAMS_NOT_EMPTY, ['name' => $id]]));
         $type = $request->get('type');
 
-        $fields = ['id', 'username', 'phone', 'bank_name', 'bank_card_account', 'union_number', 'serial_number', 'role', 'basic_salary', 'bonus', 'total_salary', 'is_notice'];
+        $fields = ['id', 'username', 'phone', 'bank_name', 'bank_card_account', 'union_number', 'serial_number', 'role', 'basic_salary', 'bonus', 'is_notice'];
         $staffDetail = (new Users())->where('id', '=', $id)->select($fields)->first()->toArray();
         $staffDetail['total_salary'] = $staffDetail['basic_salary'] + $staffDetail['bonus'];
 
@@ -249,14 +249,6 @@ class UserController extends Controller
         if (!$data) return $this->success();
 
         $data['updated_at'] = time();
-
-        if (isset($data['basic_salary']) && isset($data['bonus'])) {
-            $data['total_salary'] = $data['basic_salary'] + $data['bonus'];
-        } elseif (isset($data['bonus'])) {
-            $data['total_salary'] = $staffInfo['basic_salary'] + $data['bonus'];
-        } elseif (isset($data['basic_salary'])) {
-            $data['total_salary'] = $data['basic_salary'] + $staffInfo['bonus'];
-        }
 
         $res = (new Users())->where('id', '=', $id)->update($data);
         if (!$res) return $this->fail(UserException::E(UserException::SYSTEM_BUSY));
