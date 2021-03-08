@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Exceptions\UserException;
+use App\Library\Common;
 use App\Library\Util;
 use App\System;
 use App\Users;
@@ -113,8 +114,33 @@ class UserController extends Controller
      */
     public function staffList(Request $request)
     {
-        $staffArray = (new Users())->get()->toArray();
+        $time = $request->get('time');
+        $limit = Util::$limit;
+        $offset = $request->get('offset');
+        if (!$offset) return $this->fail(UserException::T([UserException::PARAMS_NOT_EMPTY, ['name' => $offset]]));
+        $offset = ($offset - 1) * $limit;
 
+        $userModel = new Users();
+        $totalData = $userModel->count('id');
+
+        if ($time) {
+            $endTime = $time + 86399;
+            $staffArray = $userModel
+                ->whereBetween('updated_at', [$time, $endTime])
+                ->offset($offset)
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        } else {
+            $staffArray = $userModel
+                ->offset($offset)
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        }
+
+        $pages = $totalData % $limit == 0 ? $totalData / $limit : intval($totalData / $limit) + 1;
+        $this->page($pages);
         $res = [];
 
         foreach ($staffArray as $staff) {
@@ -125,11 +151,115 @@ class UserController extends Controller
                 'bankName' => $staff['bank_name'],
                 'bankCardAccount' => $staff['bank_card_account'],
                 'role' => $staff['role'],
-                'basicSalary' => $staff['basic_salary'] . '元',
-                'bonus' => $staff['bonus'] ?: 0 .'元',
+                'basicSalary' => $staff['basic_salary'],
+                'bonus' => $staff['bonus'],
+                'totalSalary' => $staff['basic_salary'] + $staff['bonus'],
                 'updated_at' => $staff['updated_at']
             ];
         }
         return $this->success($res);
+    }
+
+
+    /**
+     * 员工详情
+     * @param Request $request
+     * @return false|string
+     */
+    public function staffDetail(Request $request)
+    {
+        $id = $request->get('id');
+        if (!$id) return $this->fail(UserException::E([UserException::PARAMS_NOT_EMPTY, ['name' => $id]]));
+        $type = $request->get('type');
+
+        $fields = ['id', 'username', 'phone', 'bank_name', 'bank_card_account', 'union_number', 'serial_number', 'role', 'basic_salary', 'bonus', 'total_salary', 'is_notice'];
+        $staffDetail = (new Users())->where('id', '=', $id)->select($fields)->first()->toArray();
+        $staffDetail['total_salary'] = $staffDetail['basic_salary'] + $staffDetail['bonus'];
+
+
+        if ($type == 'detail') {
+            $noticeMap = [0 => '不通知', 1 => '通知'];
+            $staffDetail['is_notice'] = $noticeMap[$staffDetail['is_notice']];
+            return $this->success($staffDetail);
+        } elseif ($type = 'edit') {
+            $roleMap = ['销售' => 1, '技术' => 2];
+            $staffDetail['role'] = $roleMap[$staffDetail['role']];
+            return $this->success($staffDetail);
+        }
+
+
+
+    }
+
+
+    /**
+     * 编辑员工信息
+     * @param Request $request
+     * @return false|string
+     */
+    public function editStaff(Request $request)
+    {
+        $id = $request->get('id');
+        if (!$id) return $this->fail(UserException::E([UserException::PARAMS_NOT_EMPTY, ['name' => $id]]));
+        $phone = $request->get('phone');
+        $bankName = $request->get('bankName');  //开户行名称
+        $bankCardAccount = $request->get('bankCardAccount');    //银行卡号
+        $role = $request->get('role');  //职位
+        $basicSalary = $request->get('basicSalary');    //底薪
+        if (!$phone || !$bankName || !$bankCardAccount || !$role || !$basicSalary) {
+            return $this->fail(UserException::E(UserException::RED_ASTERISK_MEANS_REQUIRED));
+        }
+        //校验手机号
+        if (!Util::checkTel($phone)) return $this->fail(UserException::E(UserException::PHONE_FORMAT_ERROR));
+        //校验银行卡号
+        if (!Util::checkBankCardAccount($bankCardAccount)) return $this->fail(UserException::E(UserException::BANK_ACCOUNT_FORMAT_ERROR));
+        $isNotice = $request->get('isNotice');      //是否需要短信通知
+        $unionNumber = $request->get('unionNumber') ?: '';    //联行号(非必填，默认'')
+        $serialNumber = $request->get('serialNumber') ?: '';  //流水号(非必填，默认'')
+        $bonus = $request->get('bonus') ?: 0;    //奖金
+
+        $staffInfo = (new Users())->where('id', '=', $id)->first();
+        if (!$staffInfo) return $this->fail(UserException::E(UserException::USER_NOT_EXISTS));
+        $staffInfo = $staffInfo->toArray();
+
+        $roleMap = ['销售' => 1, '技术' => 2];
+
+        //收集修改后的数据，进行修改
+        $data = [];
+        if ($phone != $staffInfo['phone']) {
+            $data['phone'] = $phone;
+        } elseif ($bankName != $staffInfo['bank_name']) {
+            $data['bank_name'] = $bankName;
+        } elseif ($bankCardAccount != $staffInfo['bank_card_account']) {
+            $data['bank_card_account'] = $bankCardAccount;
+        } elseif ($role != $roleMap[$staffInfo['role']]) {
+            $data['role'] = $role;
+        } elseif ($basicSalary != $staffInfo['basic_salary']) {
+            $data['basic_salary'] = $basicSalary * 100;
+        } elseif ($unionNumber != $staffInfo['union_number']) {
+            $data['union_number'] = $unionNumber;
+        } elseif ($serialNumber != $staffInfo['serial_number']) {
+            $data['serial_number'] = $serialNumber;
+        } elseif ($bonus != $staffInfo['bonus']) {
+            $data['bonus'] = $bonus * 100;
+        } elseif ($isNotice != $staffInfo['is_notice']) {
+            $data['is_notice'] = $isNotice;
+        }
+
+        if (!$data) return $this->success();
+
+        $data['updated_at'] = time();
+
+        if (isset($data['basic_salary']) && isset($data['bonus'])) {
+            $data['total_salary'] = $data['basic_salary'] + $data['bonus'];
+        } elseif (isset($data['bonus'])) {
+            $data['total_salary'] = $staffInfo['basic_salary'] + $data['bonus'];
+        } elseif (isset($data['basic_salary'])) {
+            $data['total_salary'] = $data['basic_salary'] + $staffInfo['bonus'];
+        }
+
+        $res = (new Users())->where('id', '=', $id)->update($data);
+        if (!$res) return $this->fail(UserException::E(UserException::SYSTEM_BUSY));
+        return $this->success();
     }
 }

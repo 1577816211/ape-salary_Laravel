@@ -18,5 +18,8 @@ Route::middleware('cors')->group(function () {
     Route::post('/user/change-pwd', 'UserController@changePwd');
     Route::post('/user/add-staff', 'UserController@addStaff');
     Route::post('/user/staff-list', 'UserController@staffList');
+    Route::post('/user/staff-detail', 'UserController@staffDetail');
+    Route::post('/user/edit-staff', 'UserController@editStaff');
+    Route::post('/salary/build-excel', 'SalaryController@buildExcel');
 });
 
