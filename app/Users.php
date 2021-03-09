@@ -39,6 +39,11 @@ class Users extends Model
     }
 
 
+    /**
+     * 匹配员工对应的岗位
+     * @param $value
+     * @return string
+     */
     public function getRoleAttribute($value)
     {
         if ($value == 1) {
@@ -49,4 +54,5 @@ class Users extends Model
 
         return $value;
     }
+
 }

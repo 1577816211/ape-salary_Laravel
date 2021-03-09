@@ -35,7 +35,11 @@ class UserException extends BaseException
         '0023' => '修改信息失败，不能提交空信息',
         '0024' => '红色星号是必填项',
         '0025' => '手机号码格式错误',
-        '0026' => '银行卡号格式错误'
+        '0026' => '银行卡号格式错误',
+        '0027' => '添加用户失败，销售ID不能为空',
+        '0028' => '修改销售ID失败，该销售已存在',
+        '0029' => '销售ID不能为空',
+        '0030' => '操作失败，技术不需要填写销售ID'
     ];
     const SYSTEM_BUSY = '0000';
     const LOGIN_FAIL = '0001';
@@ -64,4 +68,8 @@ class UserException extends BaseException
     const RED_ASTERISK_MEANS_REQUIRED = '0024';
     const PHONE_FORMAT_ERROR = '0025';
     const BANK_ACCOUNT_FORMAT_ERROR = '0026';
+    const REGISTER_FAIL_SALE_ID_NOT_EMPTY = '0027';
+    const EDIT_SALE_ID_ERROR = '0028';
+    const SALE_ID_NOT_EMPTY = '0029';
+    const NO_NEED_SALE_ID = '0030';
 }

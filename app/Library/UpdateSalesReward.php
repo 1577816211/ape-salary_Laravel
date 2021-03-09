@@ -1,60 +1,17 @@
 <?php
 
 
-namespace App\Console\Commands;
+namespace App\Library;
 
 
-use App\GameRecord;
+
 use App\SalesReward;
 use App\Users;
 use GuzzleHttp\Client;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use QL\QueryList;
 
-class CustomCommands extends Command
+class UpdateSalesReward
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'custom:name {name=unknown}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
-    public function handle()
-    {
-        $this->line('进入脚本执行');
-        $name =$this->argument('name');
-        switch ($name) {
-            case 'demo':
-                $this->demo();
-                break;
-            default:
-                var_dump('未知name--'. $name);
-        }
-    }
 
     /**
      * 客户端授权
@@ -74,7 +31,13 @@ class CustomCommands extends Command
         return strtoupper(md5($query));
     }
 
-    public function demo()
+
+    /**
+     * 获取并更新销售的提成
+     *
+     * @throws \Throwable
+     */
+    public function getSalesReward()
     {
         $saleIdArr = (new Users())->where('sale_id', '<>', 0)->pluck('sale_id', 'id')->toArray();
         if (!$saleIdArr) return;
@@ -133,4 +96,5 @@ class CustomCommands extends Command
             throw $throwable;
         }
     }
+
 }

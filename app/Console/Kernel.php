@@ -13,7 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Console\Commands\CustomCommands::class
+        \App\Console\Commands\CustomCommands::class,
+        \App\Console\Commands\UpdateSalesReward::class
     ];
 
     /**
@@ -26,6 +27,8 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+        $schedule->command('update-sales-reward')
+            ->everyMinute();
     }
 
     /**

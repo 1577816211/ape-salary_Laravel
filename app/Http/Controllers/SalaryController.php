@@ -55,15 +55,18 @@ class SalaryController extends Controller
             $titCol = 'A';
 
             foreach ($title as $key => $value) {
-                $sheet->getColumnDimension($titCol)->setWidth(19);  //设置列宽
-                $sheet->getRowDimension(1)->setRowHeight(55);   //设置列高
+                $sheet->getColumnDimension($titCol)->setWidth(18);  //设置列宽
+                $sheet->getColumnDimension('M')->setWidth(15);  //设置列宽
+                $sheet->getColumnDimension('N')->setWidth(15);  //设置列宽
+                $sheet->getColumnDimension('O')->setWidth(10);  //设置列宽
+                $sheet->getRowDimension(1)->setRowHeight(58);   //设置列高
                 $sheet->getStyle('A1:O1')->getAlignment()->setWrapText(true);   //自动换行
                 $sheet->getStyle('A1:O1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); //文本左右对齐
                 $sheet->getStyle('A1:O1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER); //文本上下对齐
                 $sheet->getStyle('A1:O1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor('ff8db4e2')->setARGB('ff8db4e2');    //单元格背景颜色
                 $styleArray = [
                     'borders' => [
-                        'outline' => [
+                        'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
                             'color' => ['argb' => 'ff000000'],
                         ],
@@ -71,21 +74,23 @@ class SalaryController extends Controller
                 ];
                 $sheet->getStyle('A1:O1')->applyFromArray($styleArray);
                 // 单元格内容写入
-                $sheet->setCellValue($titCol . '1', $value)->getStyle('A1:O1')->getFont()->setBold(true)->setName('宋体');
+                $sheet->setCellValue($titCol . '1', $value)->getStyle('A1:O1')->getFont()->setBold(true)->setName('宋体')->setSize(10);
                 $titCol++;
             }
 
             $row = 2; // 从第二行开始
             foreach ($newStaffArr as $staff) {
-                $sheet->getRowDimension($row)->setRowHeight(28);//设置列高
-                $sheet->getStyle('A'.$row.':'.'O'.$row)->getFont()->setName('宋体');
+                $sheet->getRowDimension($row)->setRowHeight(30);//设置列高
+                $sheet->getStyle('A'.$row.':'.'O'.$row)->getFont()->setName('宋体')->setSize(10);
                 $sheet->getStyle('A'.$row.':'.'O'.$row)->getAlignment()->setWrapText(true);     //自动换行
-//                $sheet->getStyle('C'.$row)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
-//                $sheet->getStyle('E'.$row)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
-//                $sheet->getStyle('N'.$row)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
+//                $sheet->getStyle('A'.$row.':'.'O'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); //文本左右对齐
+                $sheet->getStyle('A'.$row.':'.'O'.$row)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER); //文本上下对齐
+                $sheet->getStyle('C'.$row)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('E'.$row)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('N'.$row)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
                 $sheet->setCellValue('A' . $row, $staff['id']);
-                $sheet->setCellValue('B' . $row, $staff['payerBankName']);
-                $sheet->setCellValue('C' . $row, $staff['payerBankAccount']);
+                $sheet->setCellValue('B' . $row, $staff['payerBankAccount']);
+                $sheet->setCellValue('C' . $row, $staff['payerBankName']);
                 $sheet->setCellValue('D' . $row, $staff['bank_code']);
                 $sheet->setCellValue('E' . $row, $staff['bank_card_account']);
                 $sheet->setCellValue('F' . $row, $staff['username']);
@@ -125,49 +130,11 @@ class SalaryController extends Controller
     }
 
 
-    /**
-     * 生成excel文件
-     * @param $type
-     * @param $sheetData
-     * @param $fileName
-     * @return bool
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
-     */
-    public static function buildExcels($type, $sheetData, $fileName)
+
+
+    public function getSalesReward()
     {
-        $newExcel = new Spreadsheet();  //创建一个新的excel文档
-        $sheetDataArr = [];
-        if ($type == 'one'){
-            $sheetDataArr[] = $sheetData;
-        }elseif ($type == 'more'){
-            $sheetDataArr = $sheetData;
-        }else{
-            return false;
-        }
-        foreach ($sheetDataArr as $index => $oneSheet){
-            $newExcel->createSheet();//创建sheet
-            $objSheet = $newExcel->setActiveSheetIndex($index);//设置当前的活动sheet
-            $objSheet->setTitle($oneSheet['title']);  //设置当前sheet的标题
-            $sheetColumnArr = array_keys($oneSheet['data']);
-            foreach ($sheetColumnArr as $column){//设置宽度为true,不然太窄了
-                $newExcel->getActiveSheet()->getColumnDimension($column)->setAutoSize(true);
-            }
-            foreach ($oneSheet['data'] as $column => $oneData){
-                $data = $oneData['data'];
-                array_unshift($data, $oneData['title']);
-                foreach ($data as $key => $value){
-                    $key+=1;
-                    $objSheet->setCellValue("{$column}{$key}", $value);
-                }
-            }
-        }
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($newExcel, 'Xlsx');
-        $fileName = "{$fileName}.xlsx";
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header("Content-Disposition: attachment; filename=$fileName");
-        header('Cache-Control: max-age=0');//禁止缓存
-        return $writer->save('php://output');
+
     }
 
 

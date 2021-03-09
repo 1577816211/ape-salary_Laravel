@@ -21,5 +21,7 @@ Route::middleware('cors')->group(function () {
     Route::post('/user/staff-detail', 'UserController@staffDetail');
     Route::post('/user/edit-staff', 'UserController@editStaff');
     Route::get('/salary/build-excel', 'SalaryController@buildExcel');
+    Route::post('/system/detail', 'SystemController@getSystemConfig');
+    Route::post('/system/edit-config', 'SystemController@editSystemConfig');
 });
 

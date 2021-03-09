@@ -11,7 +11,6 @@ use App\System;
 use App\Users;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 
 class UserController extends Controller
 {
@@ -25,11 +24,11 @@ class UserController extends Controller
         $username = $request->get('username');
         $password = $request->get('password');
         if (!$username || !$password) return $this->fail(UserException::E(UserException::USERNAME_OR_PASSWORD_NOT_EMPTY));
-
-        $res = (new System())->where('key', '=', $username)->where('value', '=', md5(md5($password)))->value('id');
+        $password = md5(md5($password));
+        $res = (new System())->where('key', '=', $username)->where('value', '=', $password)->value('id');
         if (!$res) return $this->fail(UserException::E(UserException::LOGIN_FAIL));
 
-        return $this->success();
+        return $this->success(['token' => $password]);
     }
 
 
@@ -73,6 +72,9 @@ class UserController extends Controller
         if (!$name || !$phone || !$bankName || !$bankCardAccount || !$role || !$basicSalary) {
             return $this->fail(UserException::E(UserException::RED_ASTERISK_MEANS_REQUIRED));
         }
+        $saleId = $request->get('saleId') ?: 0;  //销售Id
+        if ($role == 1 && !$saleId) return $this->fail(UserException::E(UserException::REGISTER_FAIL_SALE_ID_NOT_EMPTY));
+        if ($role == 2 && $saleId) return $this->fail(UserException::E(UserException::NO_NEED_SALE_ID));
         //校验手机号
         if (!Util::checkTel($phone)) return $this->fail(UserException::E(UserException::PHONE_FORMAT_ERROR));
         //校验银行卡号
@@ -82,6 +84,7 @@ class UserController extends Controller
 
         $time = time();
         $data = [
+            'sale_id' => $saleId,
             'username' => $name,
             'phone' => $phone,
             'bank_name' => $bankName,
@@ -172,10 +175,10 @@ class UserController extends Controller
         if (!$id) return $this->fail(UserException::E([UserException::PARAMS_NOT_EMPTY, ['name' => $id]]));
         $type = $request->get('type');
 
-        $fields = ['id', 'username', 'phone', 'bank_name', 'bank_card_account', 'union_number', 'serial_number', 'role', 'basic_salary', 'bonus', 'is_notice'];
+        $fields = ['id', 'sale_id', 'username', 'phone', 'bank_name', 'bank_card_account', 'union_number', 'serial_number', 'role', 'basic_salary', 'bonus', 'is_notice'];
         $staffDetail = (new Users())->where('id', '=', $id)->select($fields)->first()->toArray();
         $staffDetail['total_salary'] = $staffDetail['basic_salary'] + $staffDetail['bonus'];
-
+        $staffDetail['sale_id'] = $staffDetail['sale_id'] ?: '';
 
         if ($type == 'detail') {
             $noticeMap = [0 => '不通知', 1 => '通知'];
@@ -209,6 +212,10 @@ class UserController extends Controller
         if (!$phone || !$bankName || !$bankCardAccount || !$role || !$basicSalary) {
             return $this->fail(UserException::E(UserException::RED_ASTERISK_MEANS_REQUIRED));
         }
+        $saleId = $request->get('saleId') ?: 0;  //销售Id
+        if ($role == 1 && !$saleId) return $this->fail(UserException::E(UserException::SALE_ID_NOT_EMPTY)); //销售需要销售ID
+        if ($role == 2 && $saleId) return $this->fail(UserException::E(UserException::NO_NEED_SALE_ID));    //技术不需要销售ID
+
         //校验手机号
         if (!Util::checkTel($phone)) return $this->fail(UserException::E(UserException::PHONE_FORMAT_ERROR));
         //校验银行卡号
@@ -244,6 +251,13 @@ class UserController extends Controller
             $data['bonus'] = $bonus * 100;
         } elseif ($isNotice != $staffInfo['is_notice']) {
             $data['is_notice'] = $isNotice;
+        }
+
+        if ($saleId != $staffInfo['sale_id']) {
+            //检测该销售ID是否存在
+            $checkSaleId = (new Users)->where('sale_id', '=', $saleId)->value('sale_id');
+            if ($checkSaleId) return $this->fail(UserException::E(UserException::EDIT_SALE_ID_ERROR));
+            $data['sale_id'] = $saleId;
         }
 
         if (!$data) return $this->success();
